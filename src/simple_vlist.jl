@@ -5,6 +5,18 @@ mutable struct SimpleVListGraph{V} <: AbstractGraph{V,Edge{V}}
     vertices::Vector{V}
 end
 
+function SimpleVListGraph{V}() where V
+    return SimpleVListGraph(Vector{V}(undef,0))
+end
+
+function Graphs.is_directed(g::SimpleVListGraph{V}) where V
+    return false
+end
+
+function Graphs.num_edges(g::SimpleVListGraph{V}) where V
+    return 0
+end
+
 function Graphs.add_vertex!(g::SimpleVListGraph{V}, v::V) where V
     push!(g.vertices, v)
 end
