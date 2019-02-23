@@ -57,6 +57,9 @@ export
     # graph
     GenericGraph, SimpleGraph, Graph, simple_graph, graph,
 
+    # simple vertex list
+    SimpleVListGraph, remove_last_vertex!,
+
     # gmatrix
     adjacency_matrix, weight_matrix, distance_matrix, laplacian_matrix,
     adjacency_matrix_sparse, weight_matrix_sparse, laplacian_matrix_sparse,
@@ -137,6 +140,7 @@ include("edge_list.jl")
 include("adjacency_list.jl")
 include("incidence_list.jl")
 include("graph.jl")
+include("simple_vlist.jl")
 include("show.jl")
 include("gmatrix.jl")
 
