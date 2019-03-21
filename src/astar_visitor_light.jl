@@ -1,18 +1,6 @@
 ## A-Star shortest path algorithm with two specific assumptions
 ## 1. Graph is implicit, i.e. edges are generated just-in-time by a neighbor function
 ## 2. The graph is just a vector of indices, i.e. actual metadata stored outside
-
-"""
-Data structure for storing all information relevant to an A-Star Solution on a graph
-"""
-mutable struct AStarStates{D<:Number, Heap, H}
-    parent_indices::Vector{Int}
-    dists::Vector{D}
-    colormap::Vector{Int}
-    heap::Heap
-    hmap::Vector{H}
-end
-
 """
 Data structure for heap entry associated with each expanded vertex
 """
@@ -22,23 +10,33 @@ struct AStarHEntry{D <: Number}
     fvalue::D
 end
 
-Base.isless(e1::AStarHEntry, e2::AStarHEntry) = e1.fvalue < e2.fvalue
+Base.isless(e1::AStarHEntry, e2::AStarHEntry) = (e1.fvalue < e2.fvalue) || (e1.fvalue == e2.fvalue && e1.gvalue < e2.gvalue)
+
+
+"""
+These are all dictionaries now because they depend on the number of vertices, which is variable
+"""
+mutable struct AStarStates{D<:Number}
+    parent_indices::Dict{Int,Int}
+    dists::Dict{Int,D}
+    colormap::Dict{Int,Int}
+    heap::MutableBinaryMinHeap{AStarHEntry{D}}
+    hmap::Dict{Int,Int}
+end
 
 
 function create_astar_states(g::AbstractGraph{V}, ::Type{D}) where {V, D <: Number}
-    n = num_vertices(g)
-    parent_indices = zeros(Int, n)
-    dists = fill(typemax(D), n)
-    colormap = zeros(Int, n)
+    parent_indices = Dict{Int,Int}()
+    dists = Dict{Int,D}()
+    colormap = Dict{Int,Int}()
     heap = MutableBinaryMinHeap{AStarHEntry{D}}()
-    hmap = zeros(Int, n)
-
+    hmap = Dict{Int,Int}()
     return AStarStates(parent_indices, dists, colormap, heap, hmap)
 end
 
-function set_source!(state::AStarStates{D}, g::AbstractGraph{V}, s::Int) where {D <: Number, V}
+function set_source!(state::AStarStates{D}, s::Int) where {D <: Number, V}
     state.parent_indices[s] = s
-    state.dists[s] = 0
+    state.dists[s] = zero(D)
     state.colormap[s] = 2
 end
 
@@ -47,19 +45,22 @@ Execute expand operation on the chosen node, while implicitly generating its nei
 visitor method, and populating `neighbors` with the neighboring vertices
 """
 function process_neighbors_implicit!(
-    state::AStarStates{D,Heap,H},
+    state::AStarStates{D},
     graph::AbstractGraph{V},
     edge_wt_fn::Function,
     neighbors::Vector{Int},
     u::Int, du::D, visitor::AbstractDijkstraVisitor,
-    heuristic::Function) where {V, D <: Number, Heap, H}
+    heuristic::Function) where {V, D <: Number}
 
     dv = zero(D)
 
     for iv in neighbors
-        v_color = state.colormap[iv]
+        # Default color 0
+        v_color = get(state.colormap, iv, 0)
 
         if v_color == 0
+            # Inserting for the first time
+            # @show u,iv
             state.dists[iv] = dv = du + edge_wt_fn(graph.vertices[u], graph.vertices[iv])
             state.parent_indices[iv] = u
             state.colormap[iv] = 1
@@ -86,10 +87,10 @@ function astar_light_shortest_path_implicit!(
     source::Int,             # the source
     visitor::AbstractDijkstraVisitor,# visitor object
     heuristic::Function,      # Heuristic function for vertices
-    state::AStarStates{D,Heap,H}) where {V, D <: Number, Heap, H}
+    state::AStarStates{D}) where {V, D <: Number}
 
     d0 = zero(D)
-    set_source!(state, graph, source)
+    set_source!(state, source)
 
     source_nbrs = Vector{Int}(undef,0)
 
