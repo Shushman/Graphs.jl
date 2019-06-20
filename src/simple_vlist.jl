@@ -25,6 +25,10 @@ function Graphs.num_vertices(g::SimpleVListGraph{V}) where V
     return length(g.vertices)
 end
 
+function Graphs.vertex_index(g::SimpleVListGraph{V}, v::V) where V
+    return findfirst(isequal(v), g.vertices)
+end
+
 """
 Pop the last vertex of the graph. Not a Graphs function.
 """
