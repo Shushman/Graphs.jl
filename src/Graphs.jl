@@ -98,11 +98,11 @@ export
     bellman_ford_shortest_paths!, bellman_ford_shortest_paths,
     has_negative_edge_cycle,
 
-    # a_star_spath
-    shortest_path,
+    # a_star_spath AND a_star_visitor_light
+    shortest_path, shortest_path_indices,
 
     # a_star_visitor_light
-    astar_light_shortest_path_implicit,
+    a_star_light_shortest_path_implicit!,
 
     # prim_mst
     PrimStates, create_prim_states, AbstractPrimVisitor,
@@ -154,7 +154,7 @@ include("connected_components.jl")
 include("dijkstra_spath.jl")
 include("bellmanford.jl")
 include("a_star_spath.jl")
-include("astar_visitor_light.jl")
+include("a_star_implicit_light.jl")
 include("prim_mst.jl")
 include("kruskal_mst.jl")
 include("floyd_warshall.jl")

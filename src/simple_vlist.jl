@@ -1,5 +1,6 @@
 """
 Custom graph structure which only has a list of vertices; edges generated implicitly.
+Particularly useful for a_star_implicit_light.jl
 """
 mutable struct SimpleVListGraph{V} <: AbstractGraph{V,Edge{V}}
     vertices::Vector{V}
@@ -30,6 +31,8 @@ function Graphs.vertex_index(g::SimpleVListGraph{V}, v::V) where V
 end
 
 """
+    remove_last_vertex!(g::SimpleVListGraph{V}) where V
+
 Pop the last vertex of the graph. Not a Graphs function.
 """
 function remove_last_vertex!(g::SimpleVListGraph{V}) where V
