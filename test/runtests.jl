@@ -12,6 +12,7 @@ tests = [
     "conn_comp",
     "dijkstra",
     "a_star_spath",
+    "a_star_implicit_light",
     "mst",
     "floyd",
     "dot",
