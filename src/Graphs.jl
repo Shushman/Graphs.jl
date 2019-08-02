@@ -102,6 +102,7 @@ export
     shortest_path, shortest_path_indices,
 
     # a_star_visitor_light
+    AStarStates,
     a_star_light_shortest_path_implicit!,
 
     # prim_mst
