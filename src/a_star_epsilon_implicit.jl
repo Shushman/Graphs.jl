@@ -1,13 +1,4 @@
-# TODO: Can just reuse AStarHEntry??
-# struct AStarHEntry{D <: Number}
-#     vIdx::Int
-#     gvalue::D
-#     fvalue::D
-# end
-#
-# Base.isless(e1::AStarHEntry, e2::AStarHEntry) = (e1.fvalue < e2.fvalue) || (e1.fvalue == e2.fvalue && e1.gvalue < e2.gvalue)
-
-import DataStructure: compare
+import DataStructures: compare
 
 struct AStarEpsilonHEntry{D <: Number}
     vIdx::Int
@@ -27,8 +18,8 @@ compare(comp::CompareFocalHeap, e1::AStarEpsilonHEntry, e2::AStarEpsilonHEntry) 
 
 
 """
-Compared with a_star_spath, the attributes of AStarStates are all Dicts instead of
-fixed-length Vectors, as arbitrarily many vertices can be added by the visitors.
+The hmaps map the vertex index (which is unique) to the heap handle; and can be used to cross-reference entries
+across heaps. This is our state-to-heap
 """
 @with_kw mutable struct AStarEpsilonStates{D<:Number}
     parent_indices::Dict{Int,Int} = Dict{Int,Int}()
@@ -39,11 +30,11 @@ fixed-length Vectors, as arbitrarily many vertices can be added by the visitors.
     # Subset of heap
     focal_heap::MutableBinaryHeap{AStarEpsilonHEntry{D},CompareFocalHeap} = MutableBinaryHeap{AStarEpsilonHEntry{D},CompareFocalHeap}()
     focal_hmap::Dict{Int,Int} = Dict{Int,Int}()
-    best_fvalue::Float64 = 0.0
+    best_fvalue::D = zero(D)
 end
 
 
-function set_source!(state::AStarStates{D}, s::Int) where {D <: Number, V}
+function set_source!(state::AStarEpsilonStates{D}, s::Int) where {D <: Number, V}
     state.parent_indices[s] = s
     state.dists[s] = zero(D)
     state.colormap[s] = 2
@@ -54,7 +45,7 @@ Execute expand operation on the chosen node, while implicitly generating its nei
 visitor method, and populating `neighbors` with the neighboring vertices.
 """
 function process_neighbors_implicit!(
-    state::AStarStates{D},
+    state::AStarEpsilonStates{D},
     graph::AbstractGraph{V},
     edge_wt_fn::Function,
     neighbors::Vector{Int},
@@ -83,10 +74,10 @@ function process_neighbors_implicit!(
             Graphs.discover_vertex!(visitor, graph.vertices[u], graph.vertices[iv], dv)
 
             new_fvalue = dv + admissible_heuristic(graph.vertices[iv])
-            new_focal_heur = parent_entry.focal_heuristic + focal_state_heuristic(graph.vertices[iv]) +
-                                                            focal_transition_heuristic(graph.vertices[u], graph.vertices[iv])
+            new_focal_heur = parent_entry.focal_heuristic + focal_state_heuristic(graph.vertices[iv], dv) +
+                                                            focal_transition_heuristic(graph.vertices[u], graph.vertices[iv], du, dv)
 
-            new_entry = AStarEpsilonHEntry(iv, dv, new_fvalue, new_focal_heur))
+            new_entry = AStarEpsilonHEntry(iv, dv, new_fvalue, new_focal_heur)
 
             state.hmap[iv] = push!(state.heap, new_entry)
 
@@ -96,7 +87,6 @@ function process_neighbors_implicit!(
             end
 
         elseif v_color == 1
-            # Must also
 
             dv = du + edge_wt_fn(graph.vertices[u], graph.vertices[iv])
 
@@ -126,7 +116,7 @@ function process_neighbors_implicit!(
 end
 
 
-function a_star_light_shortest_path_implicit!(
+function a_star_light_epsilon_shortest_path_implicit!(
     graph::AbstractGraph{V},                # the graph
     edge_wt_fn::Function, # distances associated with edges
     source::Int,             # the source index
@@ -135,22 +125,23 @@ function a_star_light_shortest_path_implicit!(
     admissible_heuristic::Function,      # Heuristic function for vertices
     focal_state_heuristic::Function,
     focal_transition_heuristic::Function,
-    state::AStarStates{D}) where {V, D <: Number}
+    state::AStarEpsilonStates{D}) where {V, D <: Number}
 
     d0 = zero(D)
     set_source!(state, source)
+    source_heur = admissible_heuristic(graph.vertices[source])
+    state.best_fvalue = source_heur
 
     # Will be populated by include_vertex!
-    source_nbrs = Vector{Int}(undef,0)
+    source_nbrs = Vector{Int}(undef, 0)
 
     # Call the user-defined visitor function for expanding the source
-
     if Graphs.include_vertex!(visitor, graph.vertices[source], graph.vertices[source], d0, source_nbrs) == false
         return state
     end
 
     # Create dummy source entry
-    source_entry = AStarEpsilonHEntry(source, d0, d0 + admissible_heuristic(graph.vertices[source]), d0)
+    source_entry = AStarEpsilonHEntry(source, d0, source_heur, d0)
     process_neighbors_implicit!(state, graph, edge_wt_fn, source_nbrs, source_entry, visitor,
                                 weight, admissible_heuristic, focal_state_heuristic, focal_transition_heuristic)
     Graphs.close_vertex!(visitor, graph.vertices[source])
@@ -159,29 +150,59 @@ function a_star_light_shortest_path_implicit!(
 
         # Enter open-set items that are now valid into focal list
         old_best_fvalue = state.best_fvalue
-        best_fvalue = top(state.heap).fvalue
+        state.best_fvalue = top(state.heap).fvalue
 
-        if best_fvalue > old_best_fvalue
+        # @show state.heap
+        # @show state.hmap
+        # @show state.focal_heap
+        # @show state.focal_hmap
+
+        if state.best_fvalue > old_best_fvalue
 
             # Iterate over open set  in increasing order of fvalue and insert in focal list if valid
             for node in sort(state.heap.nodes, by = x->x.value.fvalue)
                 fvalue = node.value.fvalue
-                if fvalue > old_best_fvalue && fvalue <= weight * best_fvalue
+
+                if fvalue > weight * old_best_fvalue && fvalue <= weight * state.best_fvalue
                     state.focal_hmap[node.value.vIdx] = push!(state.focal_heap, node.value)
                 end
-                if fvalue > weight * old_best_fvalue
+
+                if fvalue > weight * state.best_fvalue
                     break
                 end
             end
         end
 
+        # Temporary - check consistency
+        # TODO: Remove later
+
+        # mismatch = false
+        # best_fvalue = top(state.heap).fvalue
+        # for node in sort(state.heap.nodes, by = x->x.value.fvalue)
+        #     fvalue = node.value.fvalue
+        #
+        #     if fvalue <= weight * best_fvalue
+        #         # Check for entry in focal heap
+        #         if ~(haskey(state.focal_hmap, node.value.vIdx))
+        #             @info "Focal set missing $(node.value) for f-val $(best_fvalue)"
+        #             mismatch = true
+        #         end
+        #     else
+        #         if haskey(state.focal_hmap, node.value.vIdx)
+        #             @info "Focal set should not have ",node.value.vIdx
+        #         end
+        #     end
+        # end
+        # @assert mismatch == false
+
+
         # pick next vertex to include
-        # TODO: Pop focal heap
         focal_entry, focal_handle = top_with_handle(state.focal_heap)
+        # @show focal_entry
         heap_handle = state.hmap[focal_entry.vIdx]
 
-        ui = focalentry.vIdx
-        du = focalentry.gvalue
+        ui = focal_entry.vIdx
+        du = focal_entry.gvalue
         state.colormap[ui] = 2
 
         # Will be populated by include_vertex!
@@ -194,7 +215,10 @@ function a_star_light_shortest_path_implicit!(
         # Delete from open list before considering neighbors
         # TODO: Check this!!!
         pop!(state.focal_heap)
+        # delete!(state.focal_heap, focal_handle)
+        delete!(state.focal_hmap, focal_entry.vIdx)
         delete!(state.heap, heap_handle)
+        delete!(state.hmap, focal_entry.vIdx)
 
         # process u's neighbors
         process_neighbors_implicit!(state, graph, edge_wt_fn, nbrs, focal_entry, visitor,
@@ -205,39 +229,17 @@ function a_star_light_shortest_path_implicit!(
     state
 end
 
-function a_star_light_shortest_path_implicit!(
+function a_star_light_epsilon_shortest_path_implicit!(
     graph::AbstractGraph{V},                # the graph
     edge_wt_fn::Function, # distances associated with edges
     source::Int,
     visitor::AbstractDijkstraVisitor,
     weight::Float64,
-    admissible_heuristic::Function = n -> 0,
-    focal_state_heuristic::Function = n -> 0,
-    focal_transition_heuristic::Function = (u, v) -> 0,
+    admissible_heuristic::Function = s -> 0,
+    focal_state_heuristic::Function = (s, gs) -> 0,
+    focal_transition_heuristic::Function = (s1, s2, gs1, gs2) -> 0,
     ::Type{D} = Float64) where {V, D <: Number}
     state = AStarEpsilonStates{D}()
-    a_star_light_shortest_path_implicit!(graph, edge_wt_fn, source, visitor, heuristic, state)
-end
-
-"""
-Given the AStarStates result, extract the shortest path
-"""
-function shortest_path_indices(state::AStarStates{D}, graph::AbstractGraph{V},
-                       source::V, target::V) where {D, V}
-
-    source_idx = vertex_index(graph, source)
-    target_idx = vertex_index(graph, target)
-
-    @assert haskey(state.parent_indices, target_idx) == true "Target has no parent!"
-
-    sp = [target_idx]
-
-    # Walk back from target to source using parent indices
-    curr_idx = target_idx
-    while curr_idx != source_idx
-        curr_idx = state.parent_indices[curr_idx]
-        pushfirst!(sp, curr_idx)
-    end
-
-    return sp
+    a_star_light_epsilon_shortest_path_implicit!(graph, edge_wt_fn, source, visitor, weight,
+                                         admissible_heuristic, focal_state_heuristic, focal_transition_heuristic, state)
 end

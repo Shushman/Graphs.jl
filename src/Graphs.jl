@@ -106,6 +106,10 @@ export
     AStarStates,
     a_star_light_shortest_path_implicit!,
 
+    # a_star_epsilon,
+    AStarEpsilonHEntry,
+    a_star_light_epsilon_shortest_path_implicit!,
+
     # prim_mst
     PrimStates, create_prim_states, AbstractPrimVisitor,
     prim_minimum_spantree!, prim_minimum_spantree, prim_minimum_spantree_withlog,
@@ -157,6 +161,7 @@ include("dijkstra_spath.jl")
 include("bellmanford.jl")
 include("a_star_spath.jl")
 include("a_star_implicit_light.jl")
+include("a_star_epsilon_implicit.jl")
 include("prim_mst.jl")
 include("kruskal_mst.jl")
 include("floyd_warshall.jl")

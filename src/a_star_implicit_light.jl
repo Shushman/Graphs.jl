@@ -7,7 +7,6 @@
 # We do not bother with deleting vertices as it is typically not worth the effort
 # for implicit search
 
-
 """
 Data structure for heap entry associated with each expanded vertex.
 
