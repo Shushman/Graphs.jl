@@ -29,23 +29,14 @@ Base.isless(e1::AStarHEntry, e2::AStarHEntry) = (e1.fvalue < e2.fvalue) || (e1.f
 Compared with a_star_spath, the attributes of AStarStates are all Dicts instead of
 fixed-length Vectors, as arbitrarily many vertices can be added by the visitors.
 """
-mutable struct AStarStates{D<:Number}
-    parent_indices::Dict{Int,Int}
-    dists::Dict{Int,D}
-    colormap::Dict{Int,Int}
-    heap::MutableBinaryMinHeap{AStarHEntry{D}}
-    hmap::Dict{Int,Int}
+@with_kw mutable struct AStarStates{D<:Number}
+    parent_indices::Dict{Int,Int} = Dict{Int,Int}()
+    dists::Dict{Int,D} = Dict{Int,D}()
+    colormap::Dict{Int,Int} = Dict{Int,Int}()
+    heap::MutableBinaryMinHeap{AStarHEntry{D}} = MutableBinaryMinHeap{AStarHEntry{D}}()
+    hmap::Dict{Int,Int} = Dict{Int,Int}()
 end
 
-
-function create_a_star_states(g::AbstractGraph{V}, ::Type{D}) where {V, D <: Number}
-    parent_indices = Dict{Int,Int}()
-    dists = Dict{Int,D}()
-    colormap = Dict{Int,Int}()
-    heap = MutableBinaryMinHeap{AStarHEntry{D}}()
-    hmap = Dict{Int,Int}()
-    return AStarStates(parent_indices, dists, colormap, heap, hmap)
-end
 
 function set_source!(state::AStarStates{D}, s::Int) where {D <: Number, V}
     state.parent_indices[s] = s
@@ -153,7 +144,7 @@ function a_star_light_shortest_path_implicit!(
     visitor::AbstractDijkstraVisitor,
     heuristic::Function = n -> 0,
     ::Type{D} = Float64) where {V, D <: Number}
-    state = create_a_star_states(graph, D)
+    state = AStarStates{D}()
     a_star_light_shortest_path_implicit!(graph, edge_wt_fn, source, visitor, heuristic, state)
 end
 
