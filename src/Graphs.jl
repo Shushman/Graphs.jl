@@ -110,6 +110,11 @@ export
     AStarEpsilonHEntry,
     a_star_light_epsilon_shortest_path_implicit!,
 
+    # a_star_constrained
+    a_star_constrained_shortest_path_implicit!,
+    shortest_path_cost_weights,
+    AStarMCSPStates,
+
     # prim_mst
     PrimStates, create_prim_states, AbstractPrimVisitor,
     prim_minimum_spantree!, prim_minimum_spantree, prim_minimum_spantree_withlog,
@@ -162,6 +167,7 @@ include("bellmanford.jl")
 include("a_star_spath.jl")
 include("a_star_implicit_light.jl")
 include("a_star_epsilon_implicit.jl")
+include("a_star_implicit_constrained_sp.jl")
 include("prim_mst.jl")
 include("kruskal_mst.jl")
 include("floyd_warshall.jl")
