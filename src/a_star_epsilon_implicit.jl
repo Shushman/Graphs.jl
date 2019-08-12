@@ -1,7 +1,7 @@
 import DataStructures: compare
 
 struct AStarEpsilonHEntry{D <: Number}
-    vIdx::Int
+    v_idx::Int64
     gvalue::D
     fvalue::D
     focal_heuristic::D
@@ -22,19 +22,19 @@ The hmaps map the vertex index (which is unique) to the heap handle; and can be 
 across heaps. This is our state-to-heap
 """
 @with_kw mutable struct AStarEpsilonStates{D<:Number}
-    parent_indices::Dict{Int,Int} = Dict{Int,Int}()
-    dists::Dict{Int,D} = Dict{Int,D}()
-    colormap::Dict{Int,Int} = Dict{Int,Int}()
+    parent_indices::Dict{Int64,Int64} = Dict{Int64,Int64}()
+    dists::Dict{Int64,D} = Dict{Int64,D}()
+    colormap::Dict{Int64,Int64} = Dict{Int64,Int64}()
     heap::MutableBinaryHeap{AStarEpsilonHEntry{D},CompareHeap} = MutableBinaryHeap{AStarEpsilonHEntry{D},CompareHeap}()
-    hmap::Dict{Int,Int} = Dict{Int,Int}()
+    hmap::Dict{Int64,Int64} = Dict{Int64,Int64}()
     # Subset of heap
     focal_heap::MutableBinaryHeap{AStarEpsilonHEntry{D},CompareFocalHeap} = MutableBinaryHeap{AStarEpsilonHEntry{D},CompareFocalHeap}()
-    focal_hmap::Dict{Int,Int} = Dict{Int,Int}()
+    focal_hmap::Dict{Int64,Int64} = Dict{Int64,Int64}()
     best_fvalue::D = zero(D)
 end
 
 
-function set_source!(state::AStarEpsilonStates{D}, s::Int) where {D <: Number, V}
+function set_source!(state::AStarEpsilonStates{D}, s::Int64) where {D <: Number, V}
     state.parent_indices[s] = s
     state.dists[s] = zero(D)
     state.colormap[s] = 2
@@ -48,7 +48,7 @@ function process_neighbors_implicit!(
     state::AStarEpsilonStates{D},
     graph::AbstractGraph{V},
     edge_wt_fn::Function,
-    neighbors::Vector{Int},
+    neighbors::Vector{Int64},
     parent_entry::AStarEpsilonHEntry{D},
     visitor::AbstractDijkstraVisitor,
     weight::Float64,
@@ -57,7 +57,7 @@ function process_neighbors_implicit!(
     focal_transition_heuristic::Function) where {V, D <: Number}
 
     dv = zero(D)
-    u = parent_entry.vIdx
+    u = parent_entry.v_idx
     du = parent_entry.gvalue
 
     for iv in neighbors
@@ -119,7 +119,7 @@ end
 function a_star_light_epsilon_shortest_path_implicit!(
     graph::AbstractGraph{V},                # the graph
     edge_wt_fn::Function, # distances associated with edges
-    source::Int,             # the source index
+    source::Int64,             # the source index
     visitor::AbstractDijkstraVisitor,# visitor object\
     weight::Float64,
     admissible_heuristic::Function,      # Heuristic function for vertices
@@ -133,7 +133,7 @@ function a_star_light_epsilon_shortest_path_implicit!(
     state.best_fvalue = source_heur
 
     # Will be populated by include_vertex!
-    source_nbrs = Vector{Int}(undef, 0)
+    source_nbrs = Vector{Int64}(undef, 0)
 
     # Call the user-defined visitor function for expanding the source
     if Graphs.include_vertex!(visitor, graph.vertices[source], graph.vertices[source], d0, source_nbrs) == false
@@ -164,7 +164,7 @@ function a_star_light_epsilon_shortest_path_implicit!(
                 fvalue = node.value.fvalue
 
                 if fvalue > weight * old_best_fvalue && fvalue <= weight * state.best_fvalue
-                    state.focal_hmap[node.value.vIdx] = push!(state.focal_heap, node.value)
+                    state.focal_hmap[node.value.v_idx] = push!(state.focal_heap, node.value)
                 end
 
                 if fvalue > weight * state.best_fvalue
@@ -183,13 +183,13 @@ function a_star_light_epsilon_shortest_path_implicit!(
         #
         #     if fvalue <= weight * best_fvalue
         #         # Check for entry in focal heap
-        #         if ~(haskey(state.focal_hmap, node.value.vIdx))
+        #         if ~(haskey(state.focal_hmap, node.value.v_idx))
         #             @info "Focal set missing $(node.value) for f-val $(best_fvalue)"
         #             mismatch = true
         #         end
         #     else
-        #         if haskey(state.focal_hmap, node.value.vIdx)
-        #             @info "Focal set should not have ",node.value.vIdx
+        #         if haskey(state.focal_hmap, node.value.v_idx)
+        #             @info "Focal set should not have ",node.value.v_idx
         #         end
         #     end
         # end
@@ -199,14 +199,14 @@ function a_star_light_epsilon_shortest_path_implicit!(
         # pick next vertex to include
         focal_entry, focal_handle = top_with_handle(state.focal_heap)
         # @show focal_entry
-        heap_handle = state.hmap[focal_entry.vIdx]
+        heap_handle = state.hmap[focal_entry.v_idx]
 
-        ui = focal_entry.vIdx
+        ui = focal_entry.v_idx
         du = focal_entry.gvalue
         state.colormap[ui] = 2
 
         # Will be populated by include_vertex!
-        nbrs = Vector{Int}(undef, 0)
+        nbrs = Vector{Int64}(undef, 0)
 
         if Graphs.include_vertex!(visitor, graph.vertices[state.parent_indices[ui]], graph.vertices[ui], du, nbrs) == false
             return state
@@ -216,9 +216,9 @@ function a_star_light_epsilon_shortest_path_implicit!(
         # TODO: Check this!!!
         pop!(state.focal_heap)
         # delete!(state.focal_heap, focal_handle)
-        delete!(state.focal_hmap, focal_entry.vIdx)
+        delete!(state.focal_hmap, focal_entry.v_idx)
         delete!(state.heap, heap_handle)
-        delete!(state.hmap, focal_entry.vIdx)
+        delete!(state.hmap, focal_entry.v_idx)
 
         # process u's neighbors
         process_neighbors_implicit!(state, graph, edge_wt_fn, nbrs, focal_entry, visitor,
@@ -232,7 +232,7 @@ end
 function a_star_light_epsilon_shortest_path_implicit!(
     graph::AbstractGraph{V},                # the graph
     edge_wt_fn::Function, # distances associated with edges
-    source::Int,
+    source::Int64,
     visitor::AbstractDijkstraVisitor,
     weight::Float64,
     admissible_heuristic::Function = s -> 0,

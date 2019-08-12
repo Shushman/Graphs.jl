@@ -11,17 +11,17 @@
 Data structure for heap entry associated with each expanded vertex.
 
 Attributes:
-    - `vIdx::Int` The integer index of the vertex being expanded
+    - `v_idx::Int64` The integer index of the vertex being expanded
     - `gvalue::D` The cost-to-come of the vertex from the source
     - `fvalue::D` The cost-to-come + heuristic cost-to-go to the goal
 """
 struct AStarHEntry{D <: Number}
-    vIdx::Int
+    v_idx::Int64
     gvalue::D
     fvalue::D
 end
 
-Base.isless(e1::AStarHEntry, e2::AStarHEntry) = (e1.fvalue < e2.fvalue) || (e1.fvalue == e2.fvalue && e1.gvalue < e2.gvalue)
+Base.isless(e1::AStarHEntry, e2::AStarHEntry) = (e1.fvalue, e1.gvalue) < (e2.fvalue, e2.gvalue) # Lexicographic ordering
 
 
 """
@@ -29,15 +29,15 @@ Compared with a_star_spath, the attributes of AStarStates are all Dicts instead 
 fixed-length Vectors, as arbitrarily many vertices can be added by the visitors.
 """
 @with_kw mutable struct AStarStates{D<:Number}
-    parent_indices::Dict{Int,Int} = Dict{Int,Int}()
-    dists::Dict{Int,D} = Dict{Int,D}()
-    colormap::Dict{Int,Int} = Dict{Int,Int}()
+    parent_indices::Dict{Int64,Int64} = Dict{Int64,Int64}()
+    dists::Dict{Int64,D} = Dict{Int64,D}()
+    colormap::Dict{Int64,Int64} = Dict{Int64,Int64}()
     heap::MutableBinaryMinHeap{AStarHEntry{D}} = MutableBinaryMinHeap{AStarHEntry{D}}()
-    hmap::Dict{Int,Int} = Dict{Int,Int}()
+    hmap::Dict{Int64,Int64} = Dict{Int64,Int64}()
 end
 
 
-function set_source!(state::AStarStates{D}, s::Int) where {D <: Number, V}
+function set_source!(state::AStarStates{D}, s::Int64) where {D <: Number, V}
     state.parent_indices[s] = s
     state.dists[s] = zero(D)
     state.colormap[s] = 2
@@ -51,8 +51,8 @@ function process_neighbors_implicit!(
     state::AStarStates{D},
     graph::AbstractGraph{V},
     edge_wt_fn::Function,
-    neighbors::Vector{Int},
-    u::Int, du::D, visitor::AbstractDijkstraVisitor,
+    neighbors::Vector{Int64},
+    u::Int64, du::D, visitor::AbstractDijkstraVisitor,
     heuristic::Function) where {V, D <: Number}
 
     dv = zero(D)
@@ -92,7 +92,7 @@ end
 function a_star_light_shortest_path_implicit!(
     graph::AbstractGraph{V},                # the graph
     edge_wt_fn::Function, # distances associated with edges
-    source::Int,             # the source index
+    source::Int64,             # the source index
     visitor::AbstractDijkstraVisitor,# visitor object
     heuristic::Function,      # Heuristic function for vertices
     state::AStarStates{D}) where {V, D <: Number}
@@ -101,7 +101,7 @@ function a_star_light_shortest_path_implicit!(
     set_source!(state, source)
 
     # Will be populated by include_vertex!
-    source_nbrs = Vector{Int}(undef,0)
+    source_nbrs = Vector{Int64}(undef,0)
 
     # Call the user-defined visitor function for expanding the source
 
@@ -116,13 +116,13 @@ function a_star_light_shortest_path_implicit!(
 
         # pick next vertex to include
         entry = pop!(state.heap)
-        ui = entry.vIdx
+        ui = entry.v_idx
         du = entry.gvalue
 
         state.colormap[ui] = 2
 
         # Will be populated by include_vertex!
-        nbrs = Vector{Int}(undef, 0)
+        nbrs = Vector{Int64}(undef, 0)
 
         if Graphs.include_vertex!(visitor, graph.vertices[state.parent_indices[ui]], graph.vertices[ui], du, nbrs) == false
             return state
@@ -139,7 +139,7 @@ end
 function a_star_light_shortest_path_implicit!(
     graph::AbstractGraph{V},                # the graph
     edge_wt_fn::Function, # distances associated with edges
-    source::Int,
+    source::Int64,
     visitor::AbstractDijkstraVisitor,
     heuristic::Function = n -> 0,
     ::Type{D} = Float64) where {V, D <: Number}
