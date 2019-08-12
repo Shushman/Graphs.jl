@@ -151,7 +151,7 @@ end
 Given the AStarStates result, extract the shortest path
 """
 function shortest_path_indices(state::AStarStates{D}, graph::AbstractGraph{V},
-                       source::V, target::V) where {D, V}
+                       source::V, target::V) where {D <: Number, V}
 
     source_idx = vertex_index(graph, source)
     target_idx = vertex_index(graph, target)
