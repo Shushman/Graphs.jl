@@ -150,20 +150,17 @@ end
 """
 Given the AStarStates result, extract the shortest path
 """
-function shortest_path_indices(state::AStarStates{D}, graph::AbstractGraph{V},
-                       source::V, target::V) where {D <: Number, V}
+function shortest_path_indices(parent_indices::Dict{Int64, Int64}, graph::AbstractGraph{V},
+                               source_idx::Int64, target_idx::Int64) where {V}
 
-    source_idx = vertex_index(graph, source)
-    target_idx = vertex_index(graph, target)
-
-    @assert haskey(state.parent_indices, target_idx) == true "Target has no parent!"
+    @assert haskey(parent_indices, target_idx) == true "Target has no parent!"
 
     sp = [target_idx]
 
     # Walk back from target to source using parent indices
     curr_idx = target_idx
     while curr_idx != source_idx
-        curr_idx = state.parent_indices[curr_idx]
+        curr_idx = parent_indices[curr_idx]
         pushfirst!(sp, curr_idx)
     end
 

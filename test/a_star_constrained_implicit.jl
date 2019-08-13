@@ -127,6 +127,7 @@ end
 
 # Create initial graph with only start
 start = 1
+start_idx = 1
 goal = 2
 test_graph = SimpleVListGraph([start])
 
@@ -137,7 +138,7 @@ heur(n) = g1_heuristics[n]
 
 
 states, tgt_entry = a_star_constrained_shortest_path_implicit!(test_graph, edge_wt_fn,
-                                                            start, vis, heur,
+                                                            start_idx, vis, heur,
                                                             weight_functions,
                                                             weight_heuristics,
                                                             weight_constraints)

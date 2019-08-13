@@ -7,6 +7,7 @@ using Parameters
 
 import Base: show, ==, <
 import Base: length, isempty, size, getindex, isless
+import DataStructures: compare
 
 export
     AbstractGraph,
@@ -115,6 +116,10 @@ export
     shortest_path_cost_weights,
     AStarMCSPStates,
 
+    # a-star epsilon constrained
+    a_star_epsilon_constrained_shortest_path_implicit!,
+    AStarEpsilonMCSPStates,
+
     # prim_mst
     PrimStates, create_prim_states, AbstractPrimVisitor,
     prim_minimum_spantree!, prim_minimum_spantree, prim_minimum_spantree_withlog,
@@ -168,6 +173,7 @@ include("a_star_spath.jl")
 include("a_star_implicit_light.jl")
 include("a_star_epsilon_implicit.jl")
 include("a_star_implicit_constrained_sp.jl")
+include("a_star_constrained_epsilon_sp.jl")
 include("prim_mst.jl")
 include("kruskal_mst.jl")
 include("floyd_warshall.jl")

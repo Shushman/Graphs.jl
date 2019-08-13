@@ -76,6 +76,7 @@ end
 
 # Create initial graph with only start
 start = 1
+start_idx = 1
 goal = 2
 test_graph = SimpleVListGraph([start])
 
@@ -83,10 +84,10 @@ test_graph = SimpleVListGraph([start])
 vis = TestVisitorImplicit(nbrs_wt_dict, test_graph, goal)
 heur(n) = g1_heuristics[n]
 
-a_star_sp_states = a_star_light_shortest_path_implicit!(test_graph, edge_wt_fn, 1, vis, heur)
+a_star_sp_states = a_star_light_shortest_path_implicit!(test_graph, edge_wt_fn, start_idx, vis, heur)
 
 # Now actually extract the shortest path indices
-sp_idxs = shortest_path_indices(a_star_sp_states, test_graph, start, goal)
+sp_idxs = shortest_path_indices(a_star_sp_states.parent_indices, test_graph, start_idx, vertex_index(test_graph, goal))
 sp = [test_graph.vertices[v] for v in sp_idxs]
 
 @test sp == [1, 16, 15, 14, 2]
