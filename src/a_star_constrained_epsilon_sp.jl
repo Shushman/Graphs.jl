@@ -30,7 +30,7 @@ function is_dominated(state::AStarEpsilonMCSPStates{D}, s::AStarEpsilonMCSPHEntr
     if haskey(state.open_list_hmap, s.v_idx)
         for ol_idx in state.open_list_hmap[s.v_idx]
             ols_entry = state.open_list.nodes[state.open_list.node_map[ol_idx]].value
-            if isless(ols_entry, s)
+            if ols_entry.gvalue <= s.gvalue && old_entry.weights <= s.weights
                 return true
             end
         end
@@ -39,7 +39,7 @@ function is_dominated(state::AStarEpsilonMCSPStates{D}, s::AStarEpsilonMCSPHEntr
     if haskey(state.closed_list_hmap, s.v_idx)
         for cl_idx in state.closed_list_hmap[s.v_idx]
             cls_entry = state.closed_list.nodes[state.closed_list.node_map[cl_idx]].value
-            if isless(cls_entry, s)
+            if cls_entry.gvalue <= s.gvalue && cls_entry.weights <= s.weights
                 return true
             end
         end

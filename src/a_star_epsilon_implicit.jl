@@ -181,7 +181,7 @@ function a_star_light_epsilon_shortest_path_implicit!(
         # TODO: Remove later
 
         mismatch = false
-        best_fvalue = top(state.heap).fvalue
+        best_fvalue = state.best_fvalue
         for node in sort(state.heap.nodes, by = x->x.value.fvalue)
             fvalue = node.value.fvalue
 
