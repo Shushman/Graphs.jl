@@ -7,7 +7,7 @@ mutable struct SimpleVListGraph{V} <: AbstractGraph{V,Edge{V}}
 end
 
 function SimpleVListGraph{V}() where V
-    return SimpleVListGraph(Vector{V}(undef,0))
+    return SimpleVListGraph(Vector{V}(undef, 0))
 end
 
 function Graphs.is_directed(g::SimpleVListGraph{V}) where V
