@@ -20,6 +20,7 @@ compare(comp::CompareFocalHeap, e1::AStarEpsilonMCSPHEntry, e2::AStarEpsilonMCSP
     closed_list_hmap::Dict{Int64,Set{Int64}}                                = Dict{Int64,Set{Int64}}()
     # Subset of heap
     focal_heap::MutableBinaryHeap{AStarEpsilonMCSPHEntry{D},CompareFocalHeap}   = MutableBinaryHeap{AStarEpsilonMCSPHEntry{D},CompareFocalHeap}()
+    ol_handles_in_focal::Set{Int64}                                         = Set{Int64}()
     focal_to_ol_handle::Dict{Int64,Int64}                                   = Dict{Int64,Int64}()
     best_fvalue::D = zero(D)
 end
@@ -120,6 +121,7 @@ function process_neighbors_implicit!(
                 # Now enter to focal list if valid according to weight
                 if new_fvalue <= eps_weight * state.best_fvalue
                     new_focal_handle = push!(state.focal_heap, new_entry)
+                    push!(state.ol_handles_in_focal, new_entry_handle)
                     state.focal_to_ol_handle[new_focal_handle] = new_entry_handle
                 end # end if
             end # end if
@@ -165,15 +167,16 @@ function a_star_epsilon_constrained_shortest_path_implicit!(
 
         # Update focal list
         if state.best_fvalue > old_best_fvalue
-
             # Iterate over open set  in increasing order of fvalue and insert in focal list if valid
             for node in sort(state.open_list.nodes, by = x->x.value.fvalue)
                 fvalue = node.value.fvalue
 
-                if fvalue > eps_weight * old_best_fvalue && fvalue <= eps_weight * state.best_fvalue
+                if fvalue > eps_weight * old_best_fvalue && fvalue <= eps_weight * state.best_fvalue &&
+                    ~(node.handle in state.ol_handles_in_focal)
                     # Need to insert open list entry to focal list
                     # And assign node handle to focal handle
                     focal_handle = push!(state.focal_heap, node.value)
+                    push!(state.ol_handles_in_focal, node.handle)
                     state.focal_to_ol_handle[focal_handle] = node.handle
                 end
 
@@ -191,6 +194,8 @@ function a_star_epsilon_constrained_shortest_path_implicit!(
         # Remove from open list and focal list
         pop!(state.focal_heap)
         delete!(state.focal_to_ol_handle, focal_handle) # Don't really need this?
+        # @show focal_handle
+        # @show ol_handle
         delete!(state.open_list, ol_handle)
         delete!(state.open_list_hmap[focal_entry.v_idx], ol_handle)
 

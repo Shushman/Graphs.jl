@@ -82,7 +82,7 @@ test_graph = SimpleVListGraph([start])
 
 # Create visitor with goal vertex 2 and heuristic
 vis = TestVisitorImplicit(nbrs_wt_dict, test_graph, goal)
-heur(n) = g1_heuristics[n]
+heur(n) = convert(Float64, g1_heuristics[n])
 
 a_star_sp_states = a_star_light_shortest_path_implicit!(test_graph, edge_wt_fn, start_idx, vis, heur)
 

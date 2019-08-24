@@ -40,7 +40,6 @@ end
 function set_source!(state::AStarStates{D}, s::Int64) where {D <: Number, V}
     state.parent_indices[s] = s
     state.dists[s] = zero(D)
-    state.colormap[s] = 2
 end
 
 """
@@ -95,22 +94,12 @@ function a_star_light_shortest_path_implicit!(
     source::Int64,             # the source index
     visitor::AbstractDijkstraVisitor,# visitor object
     heuristic::Function,      # Heuristic function for vertices
-    state::AStarStates{D}) where {V, D <: Number}
+    ::Type{D} = Float64) where {V, D <: Number}
 
-    d0 = zero(D)
+    state = AStarStates{D}()
     set_source!(state, source)
-
-    # Will be populated by include_vertex!
-    source_nbrs = Vector{Int64}(undef,0)
-
-    # Call the user-defined visitor function for expanding the source
-
-    if Graphs.include_vertex!(visitor, graph.vertices[source], graph.vertices[source], d0, source_nbrs) == false
-        return state
-    end
-
-    process_neighbors_implicit!(state, graph, edge_wt_fn, source_nbrs, source, d0, visitor, heuristic)
-    Graphs.close_vertex!(visitor, graph.vertices[source])
+    source_entry = AStarHEntry(source, zero(D), heuristic(graph.vertices[source]))
+    state.hmap[source] = push!(state.heap, source_entry)
 
     while ~(isempty(state.heap))
 
@@ -134,17 +123,6 @@ function a_star_light_shortest_path_implicit!(
     end
 
     state
-end
-
-function a_star_light_shortest_path_implicit!(
-    graph::AbstractGraph{V},                # the graph
-    edge_wt_fn::Function, # distances associated with edges
-    source::Int64,
-    visitor::AbstractDijkstraVisitor,
-    heuristic::Function = n -> 0,
-    ::Type{D} = Float64) where {V, D <: Number}
-    state = AStarStates{D}()
-    a_star_light_shortest_path_implicit!(graph, edge_wt_fn, source, visitor, heuristic, state)
 end
 
 """

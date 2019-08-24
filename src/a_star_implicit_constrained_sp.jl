@@ -25,7 +25,7 @@ function is_dominated(state::AStarMCSPStates{D}, s::AStarMCSPHEntry{D}) where {D
     if haskey(state.open_list_hmap, s.v_idx)
         for ol_idx in state.open_list_hmap[s.v_idx]
             ols_entry = state.open_list.nodes[state.open_list.node_map[ol_idx]].value
-            if ols_entry.gvalue <= s.gvalue && old_entry.weights <= s.weights
+            if ols_entry.gvalue <= s.gvalue && ols_entry.weights <= s.weights
                 return true
             end
         end
@@ -127,7 +127,7 @@ function a_star_constrained_shortest_path_implicit!(
 
     n_weights = length(weight_constraints)
 
-    source_entry = AStarMCSPHEntry(source, source, zero(D), heuristic(source), zeros(D, n_weights), 0)
+    source_entry = AStarMCSPHEntry(source, source, zero(D), heuristic(graph.vertices[source]), zeros(D, n_weights), 0)
     source_handle = push!(state.open_list, source_entry)
     state.open_list_hmap[source] = Set{Int64}(source_handle)
 
