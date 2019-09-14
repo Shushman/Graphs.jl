@@ -180,24 +180,24 @@ function a_star_light_epsilon_shortest_path_implicit!(
         # Temporary - check consistency
         # TODO: Remove later
 
-        mismatch = false
-        best_fvalue = state.best_fvalue
-        for node in sort(state.heap.nodes, by = x->x.value.fvalue)
-            fvalue = node.value.fvalue
-
-            if fvalue <= eps_weight * best_fvalue
-                # Check for entry in focal heap
-                if ~(haskey(state.focal_hmap, node.value.v_idx))
-                    @info "Focal set missing $(node.value) for f-val $(best_fvalue)"
-                    mismatch = true
-                end
-            else
-                if haskey(state.focal_hmap, node.value.v_idx)
-                    @info "Focal set should not have ",node.value.v_idx
-                end
-            end
-        end
-        @assert mismatch == false
+        # mismatch = false
+        # best_fvalue = state.best_fvalue
+        # for node in sort(state.heap.nodes, by = x->x.value.fvalue)
+        #     fvalue = node.value.fvalue
+        #
+        #     if fvalue <= eps_weight * best_fvalue
+        #         # Check for entry in focal heap
+        #         if ~(haskey(state.focal_hmap, node.value.v_idx))
+        #             @info "Focal set missing $(node.value) for f-val $(best_fvalue)"
+        #             mismatch = true
+        #         end
+        #     else
+        #         if haskey(state.focal_hmap, node.value.v_idx)
+        #             @info "Focal set should not have ",node.value.v_idx
+        #         end
+        #     end
+        # end
+        # @assert mismatch == false
 
 
         # pick next vertex to include

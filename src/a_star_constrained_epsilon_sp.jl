@@ -235,6 +235,8 @@ function shortest_path_cost_weights(state::AStarEpsilonMCSPStates{D}, graph::Abs
     target_idx = target_entry.v_idx
 
     sp = [target_idx]
+    weights = [target_entry.weights]
+    costs = [target_entry.gvalue]
 
     # Walk back USING closed list heap
     curr_idx = target_idx
@@ -247,7 +249,9 @@ function shortest_path_cost_weights(state::AStarEpsilonMCSPStates{D}, graph::Abs
         curr_idx = cl_list_entry.v_idx
         curr_par_handle = cl_list_entry.parent_handle
         pushfirst!(sp, curr_idx)
+        pushfirst!(weights, cl_list_entry.weights)
+        pushfirst!(costs, cl_list_entry.gvalue)
     end
 
-    return sp, target_entry.gvalue, target_entry.weights
+    return sp, costs, weights
 end
