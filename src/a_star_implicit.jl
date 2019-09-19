@@ -40,6 +40,7 @@ end
 function set_source!(state::AStarStates{D}, s::Int64) where {D <: Number, V}
     state.parent_indices[s] = s
     state.dists[s] = zero(D)
+    state.colormap[s] = 2
 end
 
 """
@@ -87,14 +88,29 @@ function process_neighbors_implicit!(
     end
 end
 
+"""
+Run A* search on the given list-of-indices graph. The graph visitor must generate the neighbors of the expanded
+vertex just-in-time, based on the user-defined external logic.
 
-function a_star_light_shortest_path_implicit!(
+Attributes:
+    - `graph::AbstractGraph{V} where {V}`
+    - `edge_wt_fn::F1 where {F1 <: Function}` Maps (u,v) to the edge weight of the u -> v edge
+    - `source::Int64`
+    - `visitor::AbstractDijkstraVisitor` The graph visitor that implements include_vertex!, which is called when
+                                         a vertex is expanded
+    - `heuristic::F2 where {F2 <: Function}` Maps u to h(u); an admissible heuristic for the cost-to-go
+    - `::Type{D} = Float64` The type of the edge weight value
+
+Returns:
+    - `::AStarStates` The result of the A* search
+"""
+function a_star_implicit_shortest_path!(
     graph::AbstractGraph{V},                # the graph
-    edge_wt_fn::Function, # distances associated with edges
+    edge_wt_fn::F1, # distances associated with edges
     source::Int64,             # the source index
     visitor::AbstractDijkstraVisitor,# visitor object
-    heuristic::Function,      # Heuristic function for vertices
-    ::Type{D} = Float64) where {V, D <: Number}
+    heuristic::F2,      # Heuristic function for vertices
+    ::Type{D} = Float64) where {V, D <: Number, F1 <: Function, F2 <: Function}
 
     state = AStarStates{D}()
     set_source!(state, source)
@@ -122,11 +138,20 @@ function a_star_light_shortest_path_implicit!(
         Graphs.close_vertex!(visitor, graph.vertices[ui])
     end
 
-    state
+    return state
 end
 
 """
-Given the AStarStates result, extract the shortest path
+Extract the sequence of vertex indices on the shortest path using the parent pointer dictionary.
+
+Arguments:
+    - `parent_indices::Dict{Int64, Int64}` The dictionary mapping vertex indices to their parents.
+    - `graph::AbstractGraph{V}` The graph (as a vector of indices)
+    - `source_idx::Int64`
+    - `target_idx::Int64`
+
+Returns:
+    - `::Vector{Int64}` The list of indices on the shortest path in order.
 """
 function shortest_path_indices(parent_indices::Dict{Int64, Int64}, graph::AbstractGraph{V},
                                source_idx::Int64, target_idx::Int64) where {V}

@@ -1,6 +1,3 @@
-## A-star implicit with one or more additive weight constraints on feasible paths
-## Basically, find the shortest path (w.r.t cost) that satisfies a bunch of
-## constraints that depend on other weight functions
 struct AStarMCSPHEntry{D <: Number}
     v_idx::Int64
     parent_idx::Int64
@@ -111,8 +108,28 @@ function process_neighbors_implicit!(
 end
 
 
+"""
+Runs the A*-MCSP (A* with Multiple Constraints Shortest Path) algorithm on the given list-of-indices graph.
+As with all A* versions (except a_star_spath), the graph is implicit and the graph visitor must generate the neighbors of the expanded
+vertex just-in-time.
 
-function a_star_constrained_shortest_path_implicit!(
+Arguments:
+    - `graph::AbstractGraph{V} where {V}`
+    - `edge_wt_fn::F1 where {F1 <: Function}` Maps (u,v) to the edge weight of the u -> v edge
+    - `source::Int64`
+    - `visitor::AbstractDijkstraVisitor` The graph visitor that implements include_vertex!, which is called when
+                                         a vertex is expanded
+    - `heuristic::F2 where {F2 <: Function}` Maps u to h(u); an admissible heuristic for the cost-to-go
+    - `weight_functions::Vector{F3} where {F3 <: Function}` A list of constraint weight functions for edges
+    - `weight_heuristics::Vector{F4} where {F4 <: Function}` A list of admissible heuristics for the weight constraint for edges
+    - `weight_constraints::Vector{D} where {D <: Number}` A list of correspoding weight constraint values
+    - `::Type{D} = Float64` The type of the edge weight value
+
+Returns:
+    - `::AStarMCSPStates` The result of the A* search
+    - `::AStarMCSPHEntry` The heap entry for the target node (or the source if no path found)
+"""
+function a_star_implicit_constrained_shortest_path!(
     graph::AbstractGraph{V},
     edge_wt_fn::F1,
     source::Int64,
@@ -163,14 +180,28 @@ function a_star_constrained_shortest_path_implicit!(
     return state, source_entry
 end
 
-# Given the solution state for the A*MCSP Heap, walk back using the closed list
-# to actually get the shortest feasible path
+"""
+Given the solution state for the A*MCSP Heap, walk back using the closed list to actually get the shortest feasible path.
+
+Argument:
+    - `state::AStarMCSPStates{D} where D <: Number` The solution state returned by the shortest path call.
+    - `graph::AbstractGraph{V} where V` The graph (as a vector of indices)
+    - `source_idx::Int64`
+    - `target_entry::AStarMCSPHEntry{D} where D <: Number` The heap entry of the target node returned by the shortest path call
+
+Returns:
+    - `::Vector{Int64}` The list of indices on the shortest feasible path in order.
+    - `::Vector{D} where D <: Number` The g-values (cost-to-go) of the shortest path indices.
+    - `::Vector{Vector{D}} where D <: Number` The constraint weight vectors for the shortest path indices.
+"""
 function shortest_path_cost_weights(state::AStarMCSPStates{D}, graph::AbstractGraph{V},
                                     source::Int64, target_entry::AStarMCSPHEntry{D}) where {V, D <: Number}
 
     target_idx = target_entry.v_idx
 
     sp = [target_idx]
+    weights = [target_entry.weights]
+    costs = [target_entry.gvalue]
 
     # Walk back USING closed list heap
     curr_idx = target_idx
@@ -183,7 +214,9 @@ function shortest_path_cost_weights(state::AStarMCSPStates{D}, graph::AbstractGr
         curr_idx = cl_list_entry.v_idx
         curr_par_handle = cl_list_entry.parent_handle
         pushfirst!(sp, curr_idx)
+        pushfirst!(weights, cl_list_entry.weights)
+        pushfirst!(costs, cl_list_entry.gvalue)
     end
 
-    return sp, target_entry.gvalue, target_entry.weights
+    return sp, costs, weights
 end

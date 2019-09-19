@@ -100,24 +100,25 @@ export
     bellman_ford_shortest_paths!, bellman_ford_shortest_paths,
     has_negative_edge_cycle,
 
-    # a_star_spath AND a_star_visitor_light
+    # a_star_spath
     shortest_path, shortest_path_indices,
 
     # a_star_visitor_light
     AStarStates,
-    a_star_light_shortest_path_implicit!,
+    a_star_implicit_shortest_path!,
 
     # a_star_epsilon,
-    AStarEpsilonHEntry,
-    a_star_light_epsilon_shortest_path_implicit!,
+    AStarEpsilonStates,
+    a_star_implicit_epsilon_path!,
 
     # a_star_constrained
-    a_star_constrained_shortest_path_implicit!,
+    a_star_implicit_constrained_shortest_path!,
     shortest_path_cost_weights,
     AStarMCSPStates,
+    AStarMCSPHEntry,
 
     # a-star epsilon constrained
-    a_star_epsilon_constrained_shortest_path_implicit!,
+    a_star_implicit_constrained_epsilon_path!,
     AStarEpsilonMCSPStates,
 
     # prim_mst
@@ -170,10 +171,10 @@ include("connected_components.jl")
 include("dijkstra_spath.jl")
 include("bellmanford.jl")
 include("a_star_spath.jl")
-include("a_star_implicit_light.jl")
-include("a_star_epsilon_implicit.jl")
-include("a_star_implicit_constrained_sp.jl")
-include("a_star_constrained_epsilon_sp.jl")
+include("a_star_implicit.jl")
+include("a_star_implicit_epsilon.jl")
+include("a_star_implicit_constrained.jl")
+include("a_star_implicit_constrained_epsilon.jl")
 include("prim_mst.jl")
 include("kruskal_mst.jl")
 include("floyd_warshall.jl")

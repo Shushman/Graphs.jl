@@ -6,14 +6,13 @@ using Test
 g1_wedges = [
     (1, 20, 75.),
     (1, 16, 140.), #2, Arad -- Sibiu
-    (1, 17, 218.),
+    (1, 17, 118.),
     (20, 13, 71.),
     (13, 16, 151.),
     (16, 6, 99.),
     (16, 15, 80.), #7, Sibiu -- Rimnicu Vilcea
     (6, 2, 211.),
     (17, 10, 111.),
-    (17, 2, 500.0),
     (10, 11, 70.),
     (11, 4, 75.),
     (4, 3, 120.),
@@ -30,12 +29,12 @@ g1_wedges = [
     (9, 12, 87.) ]
 
 g1_heuristics = [
-    366., 0., 160., 242., 161., 210., 77., 151., 226., 244., 218., 234., 300., 100., 193.,
-    253., 329., 80., 199., 374. ]
-
+    366, 0, 160, 242, 161, 176, 77, 151, 226, 244, 241, 234, 380, 100, 193,
+    253, 329, 80, 199, 374 ]
 
 # Create a dictionary to map indices to neighbours and edge weights
 nbrs_wt_dict = Dict{Int64, Dict{Int64, Float64}}()
+
 for (u, v, wt) in g1_wedges
     if haskey(nbrs_wt_dict, u)
         nbrs_wt_dict[u][v] = wt
@@ -52,7 +51,6 @@ struct TestVisitorImplicit <: AbstractDijkstraVisitor
     test_graph::SimpleVListGraph
     goal_vtx::Int64
 end
-
 
 function Graphs.include_vertex!(vis::TestVisitorImplicit, u::Int64, v::Int64,
                                 d::Float64, nbrs::Vector{Int64})
@@ -73,7 +71,6 @@ function Graphs.include_vertex!(vis::TestVisitorImplicit, u::Int64, v::Int64,
         push!(nbrs, vertex_index(vis.test_graph, n))
     end
 
-
     return nbrs
 end
 
@@ -81,25 +78,16 @@ end
 start = 1
 start_idx = 1
 goal = 2
-eps_weight = 2.0
 test_graph = SimpleVListGraph([start])
 
 # Create visitor with goal vertex 2 and heuristic
 vis = TestVisitorImplicit(nbrs_wt_dict, test_graph, goal)
-admissible_heuristic(n) = g1_heuristics[n]
-focal_state_heuristic(n) = 1000.0 - g1_heuristics[n]
-focal_transition_heuristic(u, v) = 1000.0 - nbrs_wt_dict[u][v]
+heur(n) = convert(Float64, g1_heuristics[n])
 
-a_star_eps_states = a_star_light_epsilon_shortest_path_implicit!(test_graph,
-                                                                edge_wt_fn, start_idx,
-                                                                vis, eps_weight,
-                                                                admissible_heuristic,
-                                                                focal_state_heuristic,
-                                                                focal_transition_heuristic,
-                                                                Float64)
+a_star_sp_states = a_star_implicit_shortest_path!(test_graph, edge_wt_fn, start_idx, vis, heur)
 
-sp_idxs = shortest_path_indices(a_star_eps_states.parent_indices, test_graph,
-                                start_idx, vertex_index(test_graph, goal))
+# Now actually extract the shortest path indices
+sp_idxs = shortest_path_indices(a_star_sp_states.parent_indices, test_graph, start_idx, vertex_index(test_graph, goal))
 sp = [test_graph.vertices[v] for v in sp_idxs]
 
-@test sp = [1, 17, 2]
+@test sp == [1, 16, 15, 14, 2]

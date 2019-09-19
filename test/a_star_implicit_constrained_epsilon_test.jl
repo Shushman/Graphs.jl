@@ -138,7 +138,7 @@ focal_state_heuristic(n) = 1000.0 - g1_heuristics[n]
 focal_transition_heuristic(u, v) = 1000.0 - nbrs_wt_dict[u][v]
 
 
-states, tgt_entry = a_star_epsilon_constrained_shortest_path_implicit!(test_graph, edge_wt_fn,
+states, tgt_entry = a_star_implicit_constrained_epsilon_path!(test_graph, edge_wt_fn,
                                                             start_idx, vis, eps_weight,
                                                             admissible_heuristic,
                                                             focal_state_heuristic,
@@ -147,12 +147,10 @@ states, tgt_entry = a_star_epsilon_constrained_shortest_path_implicit!(test_grap
                                                             weight_heuristics,
                                                             weight_constraints)
 
-sp_idxs, costs, wts = shortest_path_cost_weights(states, test_graph, start, tgt_entry)
+sp_idxs, costs, wts = shortest_path_cost_weights(states.a_star_states, test_graph, start, tgt_entry)
 sp = [test_graph.vertices[s] for s in sp_idxs]
 
 @test sp == [1, 16, 15, 14, 2]
-@show wts
-@show costs
 
 # For inf weight constraint, reduces to a* constrained - get [1, 17, 2]
 # For weight = 650. get [1, 16, 6, 2]

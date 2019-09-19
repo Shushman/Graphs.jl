@@ -137,13 +137,13 @@ heur(n) = g1_heuristics[n]
 
 
 
-states, tgt_entry = a_star_constrained_shortest_path_implicit!(test_graph, edge_wt_fn,
+states, tgt_entry = a_star_implicit_constrained_shortest_path!(test_graph, edge_wt_fn,
                                                             start_idx, vis, heur,
                                                             weight_functions,
                                                             weight_heuristics,
                                                             weight_constraints)
 
-sp_idxs, cost, wts = shortest_path_cost_weights(states, test_graph, start, tgt_entry)
+sp_idxs, costs, wts = shortest_path_cost_weights(states, test_graph, start, tgt_entry)
 sp = [test_graph.vertices[s] for s in sp_idxs]
 
 @test sp == [1, 16, 6, 2]
