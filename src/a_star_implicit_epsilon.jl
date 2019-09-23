@@ -137,7 +137,7 @@ function a_star_implicit_epsilon_path!(
     state.best_fvalue = source_heur
 
     # Initialize heap
-    source_entry = AStarEpsilonHEntry(AStarHEntry(source, zero(D), source_heur), focal_state_heuristic(source))
+    source_entry = AStarEpsilonHEntry(AStarHEntry(source, zero(D), source_heur), focal_state_heuristic(graph.vertices[source]))
     source_handle = push!(state.a_star_states.heap, source_entry.a_star_entry)
     state.a_star_states.hmap[source] = source_handle
 
