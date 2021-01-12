@@ -151,11 +151,6 @@ function a_star_implicit_epsilon_path!(
         old_best_fvalue = state.best_fvalue
         state.best_fvalue = top(state.a_star_states.heap).fvalue
 
-        # @show state.heap
-        # @show state.hmap
-        # @show state.focal_heap
-        # @show state.focal_hmap
-
         if state.best_fvalue > old_best_fvalue
 
             # Iterate over open set  in increasing order of fvalue and insert in focal list if valid
@@ -173,33 +168,8 @@ function a_star_implicit_epsilon_path!(
             end
         end
 
-        # Temporary - check consistency
-        # TODO: Remove later
-
-        # mismatch = false
-        # best_fvalue = state.best_fvalue
-        # for node in sort(state.heap.nodes, by = x->x.value.a_star_entry.fvalue)
-        #     fvalue = node.value.a_star_entry.fvalue
-        #
-        #     if fvalue <= eps_weight * best_fvalue
-        #         # Check for entry in focal heap
-        #         if ~(haskey(state.focal_hmap, node.value.a_star_entry.v_idx))
-        #             @info "Focal set missing $(node.value) for f-val $(best_fvalue)"
-        #             mismatch = true
-        #         end
-        #     else
-        #         if haskey(state.focal_hmap, node.value.a_star_entry.v_idx)
-        #             @info "Focal set should not have ",node.value.a_star_entry.v_idx
-        #         end
-        #     end
-        # end
-        # @assert mismatch == false
-
-
         # pick next vertex to include
         focal_entry, focal_handle = top_with_handle(state.focal_heap)
-        # @show graph.vertices[focal_entry.a_star_entry.v_idx]
-        # @show focal_entry
         heap_handle = state.a_star_states.hmap[focal_entry.a_star_entry.v_idx]
 
         ui = focal_entry.a_star_entry.v_idx
